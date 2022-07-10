@@ -340,3 +340,70 @@ plot(MyForecast)
 
 #validate forecast
 Box.test(MyForecast$residuals, lag = 15, type = "Ljung-Box")
+___________________________________________________________________
+
+#Running ARIMA forecasting on the 1'st dataset
+#Importing the quarterly numbers
+
+AverageQuarterly <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/AverageQuarterly.xlsx")
+View(AverageQuarterly)
+
+#Getting rid of NAs
+
+YearUsAll20 = na.omit(AverageQuarterly)
+YearUsAll20
+class(YearUsAll20)
+
+#data frame table
+#Putting in time series format
+
+TSMod = ts(YearUsAll20$Year, start = 2002, end = 2022, frequency = 4)
+TSMod
+
+#double-checking that it worked
+class(TSMod)
+
+#Plotting to see the shape
+scatter.smooth(x = YearUsAll20$Year, y = YearUsAll20$AvgQtrly)
+
+#Testing Assumptions
+#1. Data is Stationary
+#Auto-correlation test
+
+acf(TSMod)
+#Partial auto-correlation test
+pacf(TSMod)
+#The data is stationary
+
+#Augmented Dickey-Fuller Test
+adf.test(TSMod)
+
+#data:  TSMod
+#Dickey-Fuller = -3.73e+12, Lag order = 4, p-value = 0.01
+#alternative hypothesis: stationary
+#The data is stationary
+
+NewMod = auto.arima(TSMod, ic = "aic", trace = TRUE)
+NewMod
+
+#Models (0,0,0) and (0,1,0)
+
+acf(ts(NewMod$residuals))
+#partial auto correlation function
+
+pacf(ts(NewMod$residuals))
+
+MyForecast = forecast(NewMod, level = c(95), h = 10*1)
+MyForecast
+
+#Point Forecast    Lo 95    Hi 95
+#2022 Q2           2022 2021.106 2022.894
+#2022 Q3           2022 2021.106 2022.894
+#2022 Q4           2022 2021.106 2022.894
+#2023 Q1           2023 2022.106 2023.894
+#2023 Q2           2023 2021.736 2024.264
+#2023 Q3           2023 2021.736 2024.264
+#2023 Q4           2023 2021.736 2024.264
+#2024 Q1           2024 2022.736 2025.264
+#2024 Q2           2024 2022.451 2025.549
+#2024 Q3           2024 2022.451 2025.549
