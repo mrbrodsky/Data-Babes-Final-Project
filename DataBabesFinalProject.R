@@ -332,3 +332,6 @@ MyForecast2
 
 #validate forecast
 Box.test(MyForecast2$residuals, lag = 4, type = "Ljung-Box")
+
+#data:  MyForecast2$residuals
+#X-squared = 73.662, df = 4, p-value = 3.775e-15
