@@ -1,10 +1,5 @@
 #Load Libraries
 
-library("car")
-library("caret")
-library("gvlma")
-library("predictmeans")
-library("e1071")
 library("lmtest")
 library("readxl")
 library("ggplot2")
@@ -12,44 +7,29 @@ library("dplyr")
 library("tidyr")
 library("tidyverse")
 library("lubridate")
-
+library("forecast")
+library("tseries")
 
 #Import Datasets
 
-Data1RegularConventional <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data1RegularConventional.xlsx")
-View(Data1RegularConventional)
-Data2RegularReformulated <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data2RegularReformulated.xlsx")
-View(Data2RegularReformulated)
 Data3RegularAllAreasAllFormulations <-read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/Data3AllAreasAllFormulations.xlsx")
 View(Data3AllAreasAllFormulations)
-Data4MidGradeConventional <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data4MidGradeConventional.xlsx")
-View(Data4MidGradeConventional)
-Data5MidGradeReformulated <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data5MidGradeReformulated.xlsx")
-View(Data5MidGradeReformulated)
 Data6MidGradeAllAreasAllFormulations <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data6MidGradeAllAreasAllFormulations.xlsx")
 View(Data6MidGradeAllAreasAllFormulations)
-Data7PremiumConventional <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data7PremiumConventional.xlsx")
-View(Data7PremiumConventional)
-Data8PremiumReformulated <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data8PremiumReformulated.xlsx")
-View(Data8PremiumReformulated)
 Data9PremiumAllAreasAllFormulations <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data9PremiumAllAreasAllFormulations.xlsx")
 View(Data9PremiumAllAreasAllFormulations)
-Data10AllGradesConventional <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data10AllGradesConventional.xlsx")
-View(Data10AllGradesConventional)
-Data11AllGradesReformulated <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data11AllGradesReformulated.xlsx")
-View(Data11AllGradesReformulated)
 Data12AllGradesAreasAndFormulations <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data12AllGradesAreasAndFormulations.xlsx")
 View(Data12AllGradesAreasAndFormulations)
-#SeriesReport_20220608110458_31191e <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110458_31191e.xlsx")
-#View(SeriesReport_20220608110458_31191e)
-#SeriesReport_20220608110510_4a84c3 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110510_4a84c3.xlsx")
-#View(SeriesReport_20220608110510_4a84c3)
-#SeriesReport_20220608110516_3befcc <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110516_3befcc.xlsx")
-#View(SeriesReport_20220608110516_3befcc)
-#SeriesReport_20220608110521_4d3d85 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110521_4d3d85.xlsx")
-#View(SeriesReport_20220608110521_4d3d85)
-#SeriesReport_20220608110525_4e78be <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110525_4e78be.xlsx")
-#View(SeriesReport_20220608110525_4e78be)
+SeriesReport_20220608110458_31191e <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110458_31191e.xlsx")
+View(SeriesReport_20220608110458_31191e)
+SeriesReport_20220608110510_4a84c3 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110510_4a84c3.xlsx")
+View(SeriesReport_20220608110510_4a84c3)
+SeriesReport_20220608110516_3befcc <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110516_3befcc.xlsx")
+View(SeriesReport_20220608110516_3befcc)
+SeriesReport_20220608110521_4d3d85 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110521_4d3d85.xlsx")
+View(SeriesReport_20220608110521_4d3d85)
+SeriesReport_20220608110525_4e78be <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110525_4e78be.xlsx")
+View(SeriesReport_20220608110525_4e78be)
 
 #Asking the Questions
 # What will future gas prices look like based on previous trends?
@@ -63,12 +43,10 @@ scatter.smooth(x = Data12AllGradesAreasAndFormulations$Date, y= Data12AllGradesA
 
 # The data is not linear
 # Examine the Residuals for Patterns-- 
-# The data is not exponential or logistic
-# Deciding on Step-wise Regression
-# Backward Model
-
+# The data is not exponential but may be logistic
 # Data Wrangling- picking out IVs  
 # View NA Values
+# A time-series ARIMA model may be best
 
 view(Data3AllAreasAllFormulations)
 is.na(Data3AllAreasAllFormulations)
@@ -89,58 +67,6 @@ LocationModel
 
 unique(LocationModel)
 
-
-#Backward Elimination
-
-fitAll = lm(USAllAll ~ ., data = LocationModel)
-summary(fitAll)
-# All Coefficients are significant
-# Which location is the best indicator of overall price?
-step(fitAll, direction = "backward")
-
-#Best Fit Model: lm(formula = USAllAll ~ EastCoastAllAll + NewEnglandAllAll + 
-# CentralAtlanticAllAll + LowerAtlanticAllAll + MidwestAllAll + 
-# GulfCoastAllAll + RockyMountainAllAll + WestCoastAllAll, 
-# data = LocationModel)
-
-#All locations are significant, and are all included in our best fit model
-
-#How does the Grade effect the price?
-#Creating another model based on Grade: Regular, MidGrade, or Premium
-
-GradeModel <-merge(Data3, Data6, by = "Date")
-GradeModel
-
-GradeModel2 <- merge(GradeModel, Data9, by = "Date")
-GradeModel2
-
-GradeModel3 <- GradeModel2()
-GradeModel3
-
-#2. Test for Homoscedasticity: The error term is normally distributed.
-lmMod <- lm(Date ~ USAllAll, data = Data12AllGradesAreasAndFormulations)
-par(mfrow = c(2,2))
-plot(lmMod)
-
-
-
-
-#3. Homogenity of variance: the variance of the error terms is constant for all values of x.
-lmtest::bptest(lmMod)
-#NCV Test
-
-car::ncvTest(lmMod)
-
-#4. The x's are fixed and measured without error. (In other words, the x's can be considered as known constants.)
-# x's are dates, so yes they are fixed and constant
-
-
-#5. Multicollinearity: the observations are independent.
-
-
-#6. Lack of outliers
-
-#----------------------------------------------------------
 #Arima Forecasting
 
 class(GradeModel3)
@@ -167,12 +93,6 @@ SR1a <- SR1[,1:2]
 SR1TS <- ts(SR1a$Year, start = min(SR1a$Year), end = max(SR1a$Year), frequency = 1)
 SR1TS
 
-install.packages("forecast")
-install.packages("tseries")
-
-
-library("forecast")
-library("tseries")
 class(SR1TS)
 # ts
 plot(SR1a)
@@ -292,8 +212,10 @@ plot(FinModel)
 #1. Data is Stationary
 #Auto-corrolation test
 acf(FinModel)
+
 #Partial auto-corrolation test
 pacf(FinModel)
+
 #The data is not stationary
 #Augmented Dickey-Fuller Test
 adf.test(FinModel)
@@ -310,15 +232,15 @@ NewModel
 
 #Best Model: ARIMA(0,1,0) with drift 
 #Coefficients:
-#  drift  
+#drift  
 #1  
 
 #sigma^2 = 0.4493:  log likelihood = Inf
 #AIC=-Inf   AICc=-Inf   BIC=-Inf
 
 acf(ts(NewModel$residuals))
-#partial auto correlation function
 
+#partial auto correlation function
 pacf(ts(NewModel$residuals))
 
 MyForecast = forecast(NewModel, level = c(95), h = 10*1)
@@ -343,7 +265,7 @@ Box.test(MyForecast$residuals, lag = 15, type = "Ljung-Box")
 ___________________________________________________________________
 
 #Running ARIMA forecasting on the 1'st dataset
-#Importing the quarterly numbers
+#Importing the quarterly numbers after some wrangling
 
 AverageQuarterly <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/AverageQuarterly.xlsx")
 View(AverageQuarterly)
@@ -356,7 +278,6 @@ class(YearUsAll20)
 
 #data frame table
 #Putting in time series format
-
 TSMod = ts(YearUsAll20$Year, start = 2002, end = 2022, frequency = 4)
 TSMod
 
@@ -369,10 +290,11 @@ scatter.smooth(x = YearUsAll20$Year, y = YearUsAll20$AvgQtrly)
 #Testing Assumptions
 #1. Data is Stationary
 #Auto-correlation test
-
 acf(TSMod)
+
 #Partial auto-correlation test
 pacf(TSMod)
+
 #The data is stationary
 
 #Augmented Dickey-Fuller Test
@@ -393,8 +315,8 @@ acf(ts(NewMod$residuals))
 
 pacf(ts(NewMod$residuals))
 
-MyForecast = forecast(NewMod, level = c(95), h = 10*1)
-MyForecast
+MyForecast2 = forecast(NewMod, level = c(95), h = 10*1)
+MyForecast2
 
 #Point Forecast    Lo 95    Hi 95
 #2022 Q2           2022 2021.106 2022.894
@@ -407,3 +329,6 @@ MyForecast
 #2024 Q1           2024 2022.736 2025.264
 #2024 Q2           2024 2022.451 2025.549
 #2024 Q3           2024 2022.451 2025.549
+
+#validate forecast
+Box.test(MyForecast2$residuals, lag = 4, type = "Ljung-Box")
