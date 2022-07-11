@@ -1,6 +1,5 @@
 #Load Libraries
 
-library("lmtest")
 library("readxl")
 library("ggplot2")
 library("dplyr")
@@ -9,8 +8,10 @@ library("tidyverse")
 library("lubridate")
 library("forecast")
 library("tseries")
+library("tsbox")
 
 #Import Datasets
+#1st dataset
 
 Data3RegularAllAreasAllFormulations <-read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/Data3AllAreasAllFormulations.xlsx")
 View(Data3AllAreasAllFormulations)
@@ -20,16 +21,19 @@ Data9PremiumAllAreasAllFormulations <- read_excel("EntityCoursework/SeriesReport
 View(Data9PremiumAllAreasAllFormulations)
 Data12AllGradesAreasAndFormulations <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/Data12AllGradesAreasAndFormulations.xlsx")
 View(Data12AllGradesAreasAndFormulations)
-SeriesReport_20220608110458_31191e <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110458_31191e.xlsx")
-View(SeriesReport_20220608110458_31191e)
-SeriesReport_20220608110510_4a84c3 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110510_4a84c3.xlsx")
-View(SeriesReport_20220608110510_4a84c3)
-SeriesReport_20220608110516_3befcc <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110516_3befcc.xlsx")
-View(SeriesReport_20220608110516_3befcc)
-SeriesReport_20220608110521_4d3d85 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110521_4d3d85.xlsx")
-View(SeriesReport_20220608110521_4d3d85)
-SeriesReport_20220608110525_4e78be <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/SeriesReport-20220608110525_4e78be.xlsx")
-View(SeriesReport_20220608110525_4e78be)
+
+#2nd data set
+
+SR1 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/SR1.xlsx")
+View(SR1)
+SR2 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/SR2.xlsx")
+View(SR2)
+SR3 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/SR3.xlsx")
+View(SR3)
+SR4 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/SR4.xlsx")
+View(SR4)
+SR5 <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/SR5.xlsx")
+View(SR5)
 
 #Asking the Questions
 # What will future gas prices look like based on previous trends?
@@ -42,11 +46,10 @@ View(SeriesReport_20220608110525_4e78be)
 scatter.smooth(x = Data12AllGradesAreasAndFormulations$Date, y= Data12AllGradesAreasAndFormulations$USAllAll)
 
 # The data is not linear
-# Examine the Residuals for Patterns-- 
-# The data is not exponential but may be logistic
+# The data is not exponential but potentially logistic
+
 # Data Wrangling- picking out IVs  
 # View NA Values
-# A time-series ARIMA model may be best
 
 view(Data3AllAreasAllFormulations)
 is.na(Data3AllAreasAllFormulations)
@@ -67,6 +70,9 @@ LocationModel
 
 unique(LocationModel)
 
+
+
+#----------------------------------------------------------
 #Arima Forecasting
 
 class(GradeModel3)
@@ -77,13 +83,19 @@ class(GradeModel3)
 
 #Need smaller dataset, subsetting further
 #Try from rows 450-992
-
 GradeModelTS2 <- GradeModel3[450:478,1:2]
 GradeModelTS2
 
 GradeModelTS <- ts(GradeModelTS2$Date, start = min(GradeModelTS2$Date), end = max(GradeModelTS2$Date), frequency = 26)
 
 class(GradeModelTS)
+#ts
+
+plot(GradeModelTS)
+#Data set is too large
+
+
+#Running ARIMA on the 2nd dataset
 
 class(SR1)
 #Data Frame 
@@ -92,6 +104,7 @@ class(SR1)
 SR1a <- SR1[,1:2]
 SR1TS <- ts(SR1a$Year, start = min(SR1a$Year), end = max(SR1a$Year), frequency = 1)
 SR1TS
+
 
 class(SR1TS)
 # ts
@@ -196,76 +209,73 @@ DModel <-na.omit(CModel)
 class(DModel)
 #Data frame
 
-#Subsetting DModel
-keeps2 <- c("Jan.x", "Jan.y", data - DModel)
-
-FinModel <- ts(DModel$Year, start = min(DModel$Year), end = max(DModel$Year), frequency = 1)
+FinModel <- ts(DModel$HALF1.x, start = min(DModel$Year), end = max(DModel$Year), frequency = 2)
 FinModel
 class(FinModel)
 
 #Now it is the right class
-unique(FinModel)
+FinModel1 = unique(FinModel)
 
-plot(FinModel)
+plot(FinModel1)
 
 #Testing Assumptions
 #1. Data is Stationary
 #Auto-corrolation test
-acf(FinModel)
-
+acf(FinModel1)
 #Partial auto-corrolation test
-pacf(FinModel)
-
+pacf(FinModel1)
 #The data is not stationary
 #Augmented Dickey-Fuller Test
-adf.test(FinModel)
+adf.test(FinModel1)
 
-#data:  FinModel
-#Dickey-Fuller = NaN, Lag order = 2, p-value = NA
+#Augmented Dickey-Fuller Test
+
+#data:  FinModel1
+#Dickey-Fuller = -1.3573, Lag order = 2, p-value = 0.8172
 #alternative hypothesis: stationary
-#essentially perfect fit. Model may be unreliable.
 
 #Convert data into stationary Data
 
-NewModel = auto.arima(FinModel, ic = "aic", trace = TRUE)
+NewModel = auto.arima(FinModel1, ic = "aic", trace = TRUE)
 NewModel
 
-#Best Model: ARIMA(0,1,0) with drift 
-#Coefficients:
-#drift  
-#1  
+#Best model: ARIMA(0,1,0)                    
+#NewModel
+#Series: FinModel1 
+#ARIMA(0,1,0) 
 
-#sigma^2 = 0.4493:  log likelihood = Inf
-#AIC=-Inf   AICc=-Inf   BIC=-Inf
+#sigma^2 = 1619:  log likelihood = -46.02
+#AIC=94.05   AICc=94.62   BIC=94.25
 
 acf(ts(NewModel$residuals))
-
 #partial auto correlation function
+
 pacf(ts(NewModel$residuals))
 
-MyForecast = forecast(NewModel, level = c(95), h = 10*1)
+MyForecast = forecast(NewModel, level = c(95), h = 20*1)
 MyForecast
 
-#Point Forecast    Lo 95    Hi 95
-#2022           2022 2020.686 2023.314
-#2023           2023 2021.142 2024.858
-#2024           2024 2021.724 2026.276
-#2025           2025 2022.372 2027.628
-#2026           2026 2023.062 2028.938
-#2027           2027 2023.782 2030.218
-#2028           2028 2024.524 2031.476
-#2029           2029 2025.284 2032.716
-#2030           2030 2026.059 2033.941
-#2031           2031 2026.845 2035.155
+#Point Forecast      Lo 95    Hi 95
+#11        243.583 164.716153 322.4498
+#12        243.583 132.048436 355.1176
+#13        243.583 106.981615 380.1844
+#14        243.583  85.849307 401.3167
+#15        243.583  67.231370 419.9346
+#16        243.583  50.399468 436.7665
+#17        243.583  34.920937 452.2451
+#18        243.583  20.513872 466.6521
+#19        243.583   6.982460 480.1835
+#20        243.583  -5.815867 492.9819
 
 plot(MyForecast)
 
 #validate forecast
 Box.test(MyForecast$residuals, lag = 15, type = "Ljung-Box")
+
 ___________________________________________________________________
 
 #Running ARIMA forecasting on the 1'st dataset
-#Importing the quarterly numbers after some wrangling
+#Importing the quarterly numbers
 
 AverageQuarterly <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/AverageQuarterly.xlsx")
 View(AverageQuarterly)
@@ -278,6 +288,9 @@ class(YearUsAll20)
 
 #data frame table
 #Putting in time series format
+
+TSMod <- ts_timeSeries(YearUsAll20$Year)
+
 TSMod = ts(YearUsAll20$Year, start = 2002, end = 2022, frequency = 4)
 TSMod
 
@@ -287,6 +300,11 @@ class(TSMod)
 #Plotting to see the shape
 scatter.smooth(x = YearUsAll20$Year, y = YearUsAll20$AvgQtrly)
 
+TSMod[nrow(TSMod)+1] <- New_Row
+YearUsAll20['TSMod'] <- TSMod
+
+rlang::last_error()
+
 #Testing Assumptions
 #1. Data is Stationary
 #Auto-correlation test
@@ -294,7 +312,6 @@ acf(TSMod)
 
 #Partial auto-correlation test
 pacf(TSMod)
-
 #The data is stationary
 
 #Augmented Dickey-Fuller Test
@@ -335,3 +352,73 @@ Box.test(MyForecast2$residuals, lag = 4, type = "Ljung-Box")
 
 #data:  MyForecast2$residuals
 #X-squared = 73.662, df = 4, p-value = 3.775e-15
+
+-----------------------------------------------------------
+#Read in quarterly dataset
+AverageQrtrly <- read_excel("EntityCoursework/SeriesReport-20220608110458_31191e/All DataBabes Data/AverageQrtrly.xlsx")
+View(AverageQrtrly)
+
+TSMod = ts(AverageQrtrly$AvgQtrly, start = 2002, end = 2022, frequency = 4)
+TSMod
+
+#double-checking that it worked
+class(TSMod)
+
+#Plotting to see the shape
+scatter.smooth(x = AverageQrtrly$Year, y = AverageQrtrly$AvgQtrly)
+
+AverageQrtrly['TSMod'] <- TSMod
+
+#Testing Assumptions
+#1. Data is Stationary
+#Auto-correlation test
+acf(TSMod)
+
+#Partial auto-correlation test
+pacf(TSMod)
+#The data is stationary
+
+#Augmented Dickey-Fuller Test
+adf.test(TSMod)
+
+#Augmented Dickey-Fuller Test
+#Dickey-Fuller = -2.2474, Lag order = 4, p-value = 0.4745
+#alternative hypothesis: stationary
+
+
+NewMod = auto.arima(TSMod, ic = "aic", trace = TRUE)
+NewMod
+
+#Models (0,1,0) and (1,0,0)
+
+acf(ts(NewMod$residuals))
+#partial auto correlation function
+
+pacf(ts(NewMod$residuals))
+
+MyForecast2 = forecast(NewMod, level = c(95), h = 40*1)
+MyForecast2
+
+#Point Forecast    Lo 95    Hi 95
+#2022 Q2       3.869131 3.179275 4.558986
+#2022 Q3       3.923571 2.947968 4.899174
+#2022 Q4       3.689933 2.495069 4.884798
+#2023 Q1       4.066132 2.686421 5.445843
+#2023 Q2       4.099061 2.459234 5.738888
+#2023 Q3       4.114559 2.250568 5.978551
+#2023 Q4       4.048046 1.984095 6.111998
+#2024 Q1       4.155144 1.908963 6.401325
+#2024 Q2       4.164518 1.728747 6.600290
+#2024 Q3       4.168931 1.557295 6.780566
+
+
+#validate forecast
+Box.test(MyForecast2$residuals, lag = 4, type = "Ljung-Box")
+
+#Box-Ljung test
+
+#data:  MyForecast2$residuals
+#X-squared = 5.5346, df = 4, p-value = 0.2367
+
+plot(MyForecast2)
+
